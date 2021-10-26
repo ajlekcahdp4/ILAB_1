@@ -75,19 +75,14 @@ int FillIndex (struct str_inf INDEX[],int s_numb, int ch_numb, char * Buffer)
 
 int StrCompare(const char *str1, const char *str2)
 {
-    int i = 0, j = 0;
+    int i = 0;
     while (1)
     {
-        while(str1[i] < 384 || str1[i] > 447)
-            i++;
-        while(str2[j] < 384 || str2[j] > 447)
-            j++;
-        if (str1[i] != str2[j])
+        if (str1[i] != str2[i])
             break;
-        if (str2[j] == '\0')
+        if (str2[i] == '\0')
             break;
         i++;
-        j++;
     }
 
     return (str1[i] - str2[i]);
@@ -199,4 +194,3 @@ void NoVoidStr(struct str_inf INDEX[], int s_numb)
         }
     }
 }
-
