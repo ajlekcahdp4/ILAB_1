@@ -4,122 +4,201 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#define $meow printf("meow from %s (%d) %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__);
+#define $meow printf("meow from %s (%d) from %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__);
 
-#define CANARY1 0xBE31AB
-#define CANARY2 0xDEDBEDA
-#define CANARY3 0xDEDBAD
-#define CANARY4 0xC0FFEE
+
+#define PTR_DATA_CANARY1 (long*)((char*)stk->data - sizeof(long long))
+#define PTR_DATA_CANARY2 (long*)((char*)stk->data + stk->capacity * sizeof(TYPE_NAME))
 
 #define ERR_STACK_UNDERFLOW "(ERR_STACK_UNDERFLOW)"
 #define CHECK "(CHECK)"
 
 #define ERR_PTR 0
+enum ERRORS {ERR_WRONG_STK_PTR = 1, ERR_WRONG_CAPACITY, ERR_WRONG_SIZE, ERR_WRONG_CANARY, ERR_WRONG_HASH};
+
+
+/*
+#if TYPE == double
+#define FMT "%g"
+#endif // TYPE
+
+#if TYPE == int
+#define FMT "%d"
+#endif // TYPE
+
+#if TYPE == char
+#define FMT "%c"
+#endif // TYPE
+*/
+
+
+//Changeable for the type you need
+#define FMT "%g"
+typedef double TYPE_NAME;
+//
 
 typedef struct Stack
 {
-    long canary1;
+    long long canary1;
+
+    FILE * log_file;
+    long long hash;
+
     int capacity;
     size_t size;
-    double * data;
-    long canary2;
+    TYPE_NAME * data;
+
+    long long canary2;
 }Stack;
+
+long long HashCulc (Stack * stk)
+{
+    long long HASH = 0;
+    for (int i = 0; i < (stk->capacity * sizeof (TYPE_NAME) + 2 * sizeof (long long) - 1); i++)
+    {
+        HASH += ((unsigned int)*((char*)stk->data - sizeof(long long) + i)) * i;
+    }
+    for (char* ptr = (char*)&stk->canary1; ptr < (char*)(&stk->canary2 + sizeof (long long)); ptr++)
+    {
+        if (ptr < (char*)&stk->hash || ptr >= (char*)&stk->capacity)
+            HASH += ((unsigned int)(*ptr))* (int)(ptr - (char*)&stk->canary1);
+    }
+    return HASH;
+}
 
 int StackOk (Stack * stk)
 {
     if (stk == 0)
-        return 0;
+        return ERR_WRONG_STK_PTR;
     if (stk->capacity < 1)
-        return 0;
+        return ERR_WRONG_CAPACITY;
     if (stk->size > stk->capacity)
-        return 0;
+        return ERR_WRONG_SIZE;
     if (stk->size < 0)
-        return 0;
-    if (stk->canary1 != CANARY1)
-        return 0;
-    if (stk->canary2 != CANARY2)
-        return 0;
-    if (stk->data[0] != CANARY3)
-        return 0;
-    if (stk->data[stk->capacity + 1] != CANARY4)
-        return 0;
-    return 1;
+        return ERR_WRONG_SIZE;
+    if (stk->canary1 != (long long)&stk->canary1)
+        return ERR_WRONG_CANARY;
+    if (stk->canary2 != (long long)&stk->canary2)
+        return ERR_WRONG_CANARY;
+    if (*PTR_DATA_CANARY1 != (long long)PTR_DATA_CANARY1)
+        return ERR_WRONG_CANARY;
+    if (*PTR_DATA_CANARY2 != (long long)PTR_DATA_CANARY2)
+        return ERR_WRONG_CANARY;
+    if (stk->hash != HashCulc(stk))
+        return ERR_WRONG_HASH;
+    return 0;
 }
 
 void StackDump (Stack * stk, char * string)
 {
     assert (stk != 0);
-    FILE * log_file = fopen ("Logfile.txt", "w");
-    fprintf (log_file, "Stack [%p] %s\n", stk, string);
-    fprintf (log_file, "{\n");
-    fprintf (log_file, "%4scanary1 = %x\n", "", stk->canary1);
-    fprintf (log_file, "%4scapacity = %d\n", "", stk->capacity);
-    fprintf (log_file, "%4ssize = %d\n", "",stk->size);
-    fprintf (log_file, "%4sdata[%p]\n", "", stk->data);
-    fprintf (log_file, "%4s{\n", "");
-    fprintf (log_file, "%8sc[0] = %x\n", "", (long)stk->data[0]);
-    int i = 1;
-    for (i = 1; i <= stk->capacity; i ++)
+    fprintf (stk->log_file, "Stack [%p] %s\n", stk, string);
+    fprintf (stk->log_file, "{\n");
+    fprintf (stk->log_file, "%4scanary1 = %X\n", "", stk->canary1);
+    fprintf (stk->log_file, "%4scapacity = %d\n", "", stk->capacity);
+    fprintf (stk->log_file, "%4ssize = %d\n", "",stk->size);
+    fprintf (stk->log_file, "%4sdata[%p]\n", "", stk->data);
+    fprintf (stk->log_file, "%4s{\n", "");
+    fprintf (stk->log_file, "%8sdata canary 1 = %X\n", "", *PTR_DATA_CANARY1);
+    int i = 0;
+    for (i = 0; i < stk->capacity; i ++)
     {
-        if (i <= stk->size)
-            fprintf (log_file, "%8s*[%d] = %x\n", "", i, stk->data[i]);
+        if (i < stk->size)
+        {
+            fprintf (stk->log_file, "%8s*[%d] = ", "", i);
+            fprintf (stk->log_file, FMT, stk->data[i]);
+            fprintf (stk->log_file, "\n");
+        }
         else
-            fprintf (log_file, "%8s [%d] = %x\n", "", i, stk->data[i]);
+            fprintf (stk->log_file, "%8s [%d] = %g\n", "", i, stk->data[i]);
     }
-    fprintf (log_file, "%8sc[%d] = %x\n", "", i, (long)stk->data[i]);
-    fprintf (log_file, "%4s{\n", "");
-    fprintf (log_file, "}\n");
+    fprintf (stk->log_file, "%8sdata canary 2 = %X\n", "", *PTR_DATA_CANARY2);
+    fprintf (stk->log_file, "%4s}\n", "");
+    fprintf (stk->log_file, "%4scanary2 = %X\n", "", stk->canary2);
+    fprintf (stk->log_file, "}\n\n\n");
 
 }
 
 void StackCheck (Stack * stk)
 {
-    if (StackOk(stk) != true)
+    int errors = StackOk(stk);
+    switch (errors)
     {
-        StackDump (stk, "(ERR)");
-        assert (0);
+    case ERR_WRONG_STK_PTR:
+        StackDump (stk, "(ERR_WRONG_STK_PTR)");
+        break;
+    case ERR_WRONG_CAPACITY:
+        StackDump (stk, "(ERR_WRONG_CAPACITY)");
+        break;
+    case ERR_WRONG_SIZE:
+        StackDump (stk, "(ERR_WRONG_SIZE)");
+        break;
+    case ERR_WRONG_CANARY:
+        StackDump (stk, "(ERR_WRONG_CANARY)");
+        break;
+    case ERR_WRONG_HASH:
+        StackDump (stk, "(ERR_WRONG_HASH)");
+        break;
+    default:;
     }
-    else
-        StackDump (stk, "(OK)");
 }
 void StackCtor(Stack * stk, int capacity)
 {
     assert(stk != 0);
     assert (capacity > 2);
-    stk->canary1 = CANARY1;
-    stk->canary2 = CANARY2;
-    stk->data = (double *) calloc (capacity + 2, sizeof(double));
-    assert (stk->data != 0);
-    stk->data[0] = CANARY3;
-    stk->data[capacity + 1] = CANARY4;
+    stk->log_file = fopen ("Logfile.txt", "w");
+    stk->canary1 = (long long)(&(stk->canary1));
+    stk->canary2 = (long long)(&(stk->canary2));
+
+    stk->data = (TYPE_NAME *) calloc (capacity*sizeof(TYPE_NAME) + 2*sizeof(long long), sizeof(char));
     stk->capacity = capacity;
+
+    stk->data = (TYPE_NAME*)((char*)stk->data + 1 * sizeof(long long));
+
+    *PTR_DATA_CANARY1 = (long long)PTR_DATA_CANARY1;
+    *PTR_DATA_CANARY2 = (long long)PTR_DATA_CANARY2;
+
+
     stk->size = 0;
+    stk->hash = HashCulc (stk);
+
 }
 
 
 void StackResize (Stack * stk, size_t capacity)
 {
     StackCheck (stk);
-    StackCheck (stk);
-    stk->data = (double *) realloc (stk->data, capacity);
-    stk->capacity = capacity - 2;
-    stk->data[capacity + 1] = CANARY4;
+    stk->capacity = capacity;
+    stk->data = (TYPE_NAME*) realloc ((void*)((char*)stk->data - sizeof(long long)), stk->capacity * sizeof(TYPE_NAME) + 2 * sizeof (long long));
+    assert (stk->data != 0);
+    stk->data = (TYPE_NAME*)((char*)stk->data + 1 * sizeof(long long));
+    *PTR_DATA_CANARY1 = (long long)PTR_DATA_CANARY1;
+    *PTR_DATA_CANARY2 = (long long)PTR_DATA_CANARY2;
+
+    for (int i = stk->size; i < stk->capacity; i++)
+    {
+        stk->data[i] = 0;
+    }
+
+    StackDump (stk, "(RESIZED)");
+    stk->hash = HashCulc (stk);
     StackCheck (stk);
 }
-void StackPush (Stack * stk, double value)
+void StackPush (Stack * stk, TYPE_NAME value)
 {
     StackCheck (stk);
     assert (stk != 0);
     if (stk->size == stk->capacity)
     {
-        StackResize(stk, stk->capacity * 2);
+        StackResize(stk, stk->capacity + 10);
     }
-    stk->size++;
     stk->data[stk->size] = value;
+    stk->size++;
+    stk->hash = HashCulc (stk);
     StackCheck (stk);
 }
 
-int StackPop(Stack * stk, double * value)
+int StackPop(Stack * stk, TYPE_NAME * value)
 {
     StackCheck (stk);
     assert (stk != 0);
@@ -130,19 +209,24 @@ int StackPop(Stack * stk, double * value)
     }
     else
     {
-        *value = stk->data[stk->size];
+        *value = stk->data[stk->size - 1];
+        stk->data[stk->size - 1] = 0;
         stk->size--;
     }
+    stk->hash = HashCulc (stk);
     StackCheck (stk);
     return 0;
 }
 
 
 
+
 void StackDtor (Stack * stk)
 {
-    StackCheck(stk);
     assert (stk != 0);
-    free (stk->data);
+    StackCheck (stk);
+    StackDump (stk, "(END)");
+    free ((char*)stk->data - sizeof(long long));
+    fclose(stk->log_file);
     stk->data = ERR_PTR;
 }
