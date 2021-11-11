@@ -106,3 +106,4 @@ int StackPop(Stack * stk, TYPE_NAME * value);
 void StackDtor (Stack * stk);
 
 #endif // STACK_INCLUDED
+
