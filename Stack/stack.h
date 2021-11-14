@@ -18,7 +18,7 @@
 #define ERR_STACK_UNDERFLOW "(ERR_STACK_UNDERFLOW)"
 #define CHECK "(CHECK)"
 
-#define ERR_PTR 666
+#define ERR_PTR (TYPE_NAME*)666
 
 
 #define DOUBLE 0
@@ -80,7 +80,7 @@
 
 enum ERRORS
 {
-    ERR_WRONG_STK_PTR = 1, ERR_WRONG_CAPACITY, ERR_WRONG_SIZE, ERR_WRONG_CANARY, ERR_WRONG_HASH, ERR_DOUBLE_DTOR};
+    ERR_WRONG_STK_PTR = 1, ERR_WRONG_DATA_PTR, ERR_WRONG_CAPACITY, ERR_WRONG_SIZE, ERR_WRONG_CANARY, ERR_WRONG_HASH, ERR_DOUBLE_DTOR};
 typedef struct Stack
 {
     long long canary1;
@@ -104,6 +104,5 @@ void StackResize (Stack * stk, size_t capacity);
 void StackPush (Stack * stk, TYPE_NAME value);
 int StackPop(Stack * stk, TYPE_NAME * value);
 void StackDtor (Stack * stk);
-
 #endif // STACK_INCLUDED
 
