@@ -43,12 +43,12 @@ void StackDump (Stack * stk, char * string)
     assert (stk != 0);
     fprintf (stk->log_file, "Stack [%p] %s\n", stk, string);
     fprintf (stk->log_file, "{\n");
-    fprintf (stk->log_file, "%4scanary1 = %X\n", "", stk->canary1);
+    fprintf (stk->log_file, "%4scanary1 = %X\n", "", (unsigned int)stk->canary1);
     fprintf (stk->log_file, "%4scapacity = %d\n", "", stk->capacity);
-    fprintf (stk->log_file, "%4ssize = %d\n", "",stk->size);
+    fprintf (stk->log_file, "%4ssize = %u\n", "", (unsigned int)stk->size);
     fprintf (stk->log_file, "%4sdata[%p]\n", "", stk->data);
     fprintf (stk->log_file, "%4s{\n", "");
-    fprintf (stk->log_file, "%8sdata canary 1 = %X\n", "", *PTR_DATA_CANARY1);
+    fprintf (stk->log_file, "%8sdata canary 1 = %X\n", "", (unsigned int)(*PTR_DATA_CANARY1));
     int i = 0;
     for (i = 0; i < stk->capacity; i ++)
     {
@@ -58,11 +58,11 @@ void StackDump (Stack * stk, char * string)
             fprintf (stk->log_file, FMT"/n", stk->data[i]);
         }
         else
-            fprintf (stk->log_file, "%8s [%d] = %g\n", "", i, stk->data[i]);
+            fprintf (stk->log_file, "%8s [%d] = %d\n", "", i, stk->data[i]);
     }
-    fprintf (stk->log_file, "%8sdata canary 2 = %X\n", "", *PTR_DATA_CANARY2);
+    fprintf (stk->log_file, "%8sdata canary 2 = %X\n", "", (unsigned int)(*PTR_DATA_CANARY2));
     fprintf (stk->log_file, "%4s}\n", "");
-    fprintf (stk->log_file, "%4scanary2 = %X\n", "", stk->canary2);
+    fprintf (stk->log_file, "%4scanary2 = %X\n", "", (unsigned int)stk->canary2);
     fprintf (stk->log_file, "}\n\n\n");
 
 }
@@ -178,10 +178,16 @@ int StackPop(Stack * stk, TYPE_NAME * value)
 void StackDtor (Stack * stk)
 {
     assert (stk != 0);
-    StackDump (stk, "(END)");
-    free ((char*)stk->data - sizeof(long long));
+    if (stk->data == ERR_PTR)
+    {
+        stk->log_file = fopen ("Logfile.txt", "w");
+        fprintf (stk->log_file, "(ERR_DOUBLE_FREE)\n");
+    }
+    else
+    {
+        free ((char*)stk->data - sizeof(long long));
+        StackDump (stk, "(END)");
+    }
     fclose(stk->log_file);
     stk->data = ERR_PTR;
 }
-
-
