@@ -15,6 +15,16 @@ static long long HashCalc (Stack * stk)
     return HASH;
 }
 
+int ZerosCheck (Stack * stk)
+{
+    int sum = 0;
+    for (int i = stk->size; i < stk->capacity - 1; i ++)
+    {
+        sum += stk->data[i];
+    }
+    return sum;
+}
+
 static int StackOk (Stack * stk)
 {
     if (stk == 0)
@@ -35,6 +45,8 @@ static int StackOk (Stack * stk)
         return ERR_WRONG_CANARY;
     if (stk->hash != HashCalc(stk))
         return ERR_WRONG_HASH;
+    if (ZerosCheck(stk) != 0)
+        return ERR_DAMAGED_CONTENT;
     return 0;
 }
 
@@ -89,6 +101,10 @@ void StackCheck (Stack * stk)
         break;
     case ERR_DOUBLE_DTOR:
         StackDump (stk, "(ERR_DOUBLE_DTOR");
+        break;
+    case ERR_DAMAGED_CONTENT:
+        StackDump (stk, "(ERR_DAMAGED_CONTENT)");
+        break;
     default:;
     }
 }
