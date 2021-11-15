@@ -31,6 +31,8 @@
 #define UNSIGNED_LONG_LONG 7
 
 
+
+
 //Changeable for the type you need
 #define TYPE INT
 //
