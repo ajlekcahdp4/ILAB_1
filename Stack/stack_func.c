@@ -213,9 +213,6 @@ int StackPop(Stack * stk, TYPE_NAME * value)
     return 0;
 }
 
-
-
-
 void StackDtor (Stack * stk)
 {
     assert (stk != 0);
