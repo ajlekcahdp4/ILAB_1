@@ -1,3 +1,6 @@
+#ifndef ASSEMBLER_INCLUDED
+#define ASSEMBLER_INCLUDED
+
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
@@ -17,6 +20,9 @@ enum CMDS
 };
 
 
-
-int * CodeGenerate (char ** Index, int s_numb);
-
+void CodeGenerate (char* buffer, int ch_numb);
+int StrnCompare(const char *str1, const char *str2, int n);
+int FindArg (char * comand_line);
+void CmdCode (int * code, int*caret, int cmd, char * comand_line);
+int CmdNumber (char * comand_line);
+#endif
