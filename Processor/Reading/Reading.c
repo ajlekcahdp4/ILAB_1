@@ -14,17 +14,6 @@ int FillBuffer (char ** buffer)
     for (int j = 0; j < ch_numb; j++)
         printf ("%c\n", (*buffer)[j]);
     */
-    while (i < ch_numb)
-    {
-        if ((*buffer)[i] == '\n')
-        {
-            (*buffer)[i] = '\0';
-        }
-        i++;
-    }
-
-
-
     return ch_numb;
 }
 
