@@ -9,13 +9,13 @@ int FillBuffer (char ** buffer)
     *buffer = (char*)calloc (ch_numb, sizeof (char));
     ch_numb = fread (*buffer, sizeof (char), ch_numb, reading_file) + 1;
     *buffer = realloc (*buffer, ch_numb);
-    int i = 0;
     /*
     for (int j = 0; j < ch_numb; j++)
         printf ("%c\n", (*buffer)[j]);
     */
     return ch_numb;
 }
+
 
 void FillIndex (char **INDEX,int s_numb, int ch_numb, char * Buffer)
 {
