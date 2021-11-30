@@ -1,3 +1,5 @@
+#ifndef READING_INCLUDED
+#define READING_INCLUDED
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -7,3 +9,4 @@ int FillBuffer (char ** buffer);
 void WriteIntoFile (char * buffer, int ch_numb);
 int StrNumber (char * Buffer, int ch_numb);
 void FillIndex (char **INDEX,int s_numb, int ch_numb, char * Buffer);
+#endif
