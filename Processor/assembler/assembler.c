@@ -14,7 +14,7 @@ int StrnCompare(const char *str1, const char *str2, int n)
     return (str1[i] - str2[i]);
 }
 
-void CodeGenerate (char * buffer, int ch_numb)
+void CodeGenerate (char * buffer, int ch_numb, FILE* log_file)
 {
     assert (buffer);
     FILE * code_file = fopen ("code.bin", "wb");
@@ -25,32 +25,31 @@ void CodeGenerate (char * buffer, int ch_numb)
 
 
     cmd = CmdNumber(buffer);
-    CmdCode (code, &caret, cmd, buffer);
+    CmdCode (code, &caret, cmd, buffer, log_file);
     for (int  i = 0; i < ch_numb; i++)
     {
         if (buffer[i] == '\n' || buffer[i] == EOF)
         {
             cmd = CmdNumber(buffer + i + 1);
-            CmdCode (code, &caret, cmd, buffer + i + 1);
+            CmdCode (code, &caret, cmd, buffer + i + 1, log_file);
         }
     }
 
-    ///*
+    /*
     for (int i = 0; i < caret; i ++)
         printf("%d\n", code[i]);
-    //*/
+    */
 
     fwrite (code, sizeof(int), caret, code_file);
     free(code);
     fclose(code_file);
-    return code;
 }
 
 
 
 
 
-int FindArg (char * comand_line)
+int FindArg (char * comand_line, FILE* log_file)
 {
     int ARG = 0;
     int i = 0;
@@ -66,8 +65,8 @@ int FindArg (char * comand_line)
         }
         else
         {
-            printf("SINTAXIS_EROR\n");
-            printf ("str = <%s>\n", comand_line);
+            fprintf(log_file, "ERROR: Wrong argument\n");
+            fprintf(log_file, "ERROR: Found argument (%d)\n", ARG);
         }
         i++;
     }
@@ -77,7 +76,7 @@ int FindArg (char * comand_line)
 
 
 
-void CmdCode (int * code, int*caret, int cmd, char * comand_line)
+void CmdCode (int * code, int*caret, int cmd, char * comand_line, FILE* log_file)
 {
     assert(code);
     assert(comand_line);
@@ -85,7 +84,7 @@ void CmdCode (int * code, int*caret, int cmd, char * comand_line)
     switch (cmd)
     {
     case PUSH:
-        ARG = FindArg(comand_line + 4);
+        ARG = FindArg(comand_line + 4, log_file);
         code[*caret] = cmd;
         *caret += 1;
         code[*caret] = ARG;
@@ -124,8 +123,7 @@ void CmdCode (int * code, int*caret, int cmd, char * comand_line)
         *caret += 1;
         break;
     default:
-        printf("\nPIZDA %d\n", cmd);
-        printf ("str = %s\n\n", comand_line);
+        fprintf(log_file, "\nERROR: Wrong command number (%d)\n", cmd);
         break;
     }
 }
@@ -152,4 +150,3 @@ int CmdNumber (char * comand_line)
         return IN;
     return SINTAXIS_EROR;
 }
-
