@@ -4,6 +4,13 @@
 #include <math.h>
 Stack stk = {};
 
+#define DEF_CMD(name, num, args, ...)       \
+case num: {                                 \
+    __VA_ARGS__;                            \
+    }                                       \
+    break;
+
+
 void Processor (FILE* log_file)
 {
     FILE* code_file = fopen ("code.bin", "rb");
@@ -23,56 +30,13 @@ void Processor (FILE* log_file)
     }
 }
 
-void RunCode (int* code, int* caret, FILE* log_file)
+void RunCode (int* code, int* ip, FILE* log_file)
 {
     int x = 0;
     int y = 0;
-    switch (code[*caret])
+    switch (code[*ip])
     {
-    case PUSH:
-        *caret += 1;
-        StackPush (&stk, code[(*caret)]);
-        break;
-    case OUT:
-        StackPop (&stk, &x);
-        printf ("%d\n", x);
-        break;
-    case MUL:
-        StackPop (&stk, &x);
-        StackPop (&stk, &y);
-        StackPush (&stk, x * y);
-        break;
-    case SUB:
-        StackPop (&stk, &x);
-        StackPop (&stk, &y);
-        StackPush (&stk, y - x);
-        break;
-    case SQRT:
-        StackPop (&stk, &x);
-        StackPush (&stk, sqrt(x));
-        break;
-    case IN:
-        scanf ("%d", &x);
-        StackPush (&stk, x);
-        break;
-    case HLT:
-        StackDtor (&stk);
-        free (code);
-        fclose (log_file);
-        break;
-    case ADD:
-        StackPop (&stk, &x);
-        StackPop (&stk, &y);
-        StackPush (&stk, x + y);
-        break;
-    case DIV:
-        StackPop (&stk, &x);
-        StackPop (&stk, &y);
-        if (x == 0)
-            fprintf (log_file, "ERROR: ");
-        else
-            StackPush (&stk, y / x);
-        break;
+    #include "commands.h"
     default:;
     }
 }
