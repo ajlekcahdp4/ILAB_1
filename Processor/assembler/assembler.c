@@ -88,11 +88,23 @@ int FindArg (char * comand_line, FILE* log_file)
 
 void CmdCode (int * code, int*ip, char * comand_line, FILE* log_file)
 {
-    assert(code);
-    assert(comand_line);
+    assert (code);
+    assert (comand_line);
     assert (log_file);
     int ARG = 0;
+    int p = 0;
     #include "commands.h"
-    fprintf(log_file, "ERROR: NFC in line.\n");
+    {
+        fprintf( log_file, "ERROR: NFC in line.\n");
+        fprintf (log_file, "line: <");
+        while (comand_line[p] != '\n')
+        {
+            fputc (comand_line[p], log_file);
+            p++;
+        }
+        fprintf (log_file, ">\n");
+    }
+
 }
 #undef DEF_CMD
+
