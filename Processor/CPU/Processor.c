@@ -1,27 +1,30 @@
 #include "Processor.h"
 #include "Stack.h"
-#include "assembler.h"
-#include <math.h>
-Stack stk = {};
+#include <sys/stat.h>
+
+Stack stk = {};//структура со стеком и регистрами
 
 #define DEF_CMD(name, num, args, ...)       \
 case num: {                                 \
     __VA_ARGS__;                            \
+    break;                                  \
     }                                       \
-    break;
 
 
 void Processor (FILE* log_file)
 {
     FILE* code_file = fopen ("code.bin", "rb");
-    long cur_pos = ftell(code_file);
-    fseek (code_file, 0L, SEEK_END);
-    int int_numb = ftell (code_file);
-    fseek (code_file, 0L, cur_pos);
 
-    int* code = calloc (int_numb, sizeof(int));
+
+    struct stat buf;
+    stat("code.bin", &buf);
+    int int_numb = buf.st_size;
+
+
+    int* code = calloc (int_numb, sizeof(char));
     int_numb = fread (code, sizeof(int), int_numb, code_file);
-    code = (int*)realloc (code, int_numb);
+
+    code = (int*)realloc (code, int_numb * sizeof (int));
 
     StackCtor (&stk, 10);
     for (int i = 0; i < int_numb; i++)
@@ -40,3 +43,4 @@ void RunCode (int* code, int* ip, FILE* log_file)
     default:;
     }
 }
+#undef DEF_CMD
