@@ -1,16 +1,16 @@
-#include <string.h>
+#include "includes.h"
 #include "Reading.h"
 #include "assembler.h"
 #include "Processor.h"
 #include "Stack.h"
 
-FILE* log_file = 0;
 
 int main()
 {
     char * buffer = 0;
-    int ch_numb = FillBuffer (&buffer, log_file);
-    CodeGenerate (buffer, ch_numb, log_file);//Сассемблировали, записали в файл и закрыли его
+    FILE* log_file = 0;
+    int ch_numb = FillBuffer (&buffer, &log_file);
+    Assembler (buffer, ch_numb, log_file);
     Processor(log_file);
     return 0;
 }
