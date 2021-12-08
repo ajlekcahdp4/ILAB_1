@@ -1,15 +1,20 @@
 #include "assembler.h"
-#define DEF_CMD(name, num, args, ...)                                           \
-    if (StrnCompare(comand_line, #name, strlen(#name)- 1) == 0)                 \
-    {                                                                           \
-            code[*ip] = num;                                                    \
-            *ip += 1;                                                           \
-            if (args)                                                           \
-            {                                                                   \
-                code[*ip] = FindArg(comand_line + strlen(#name), log_file);     \
-                *ip += 1;                                                       \
-            }                                                                   \
-    }                                                                           \
+
+
+#define DEF_CMD(name, num, args, ...)                                                       \
+                                                                                            \
+                                                                                            \
+    if (StrnCompare(comand_line, #name, strlen(#name)- 1) == 0)                             \
+    {                                                                                       \
+            code[*ip] = num;                                                                \
+            *ip += 1;                                                                       \
+            if (args)                                                                       \
+            {                                                                               \
+                code[*ip] = FindArg(comand_line + strlen(#name), log_file);                 \
+                *ip += 1;                                                                   \
+            }                                                                               \
+                                                                                            \
+    }                                                                                       \
     else
 
 
@@ -27,31 +32,41 @@ int StrnCompare(const char *str1, const char *str2, int n)
     return (str1[i] - str2[i]);
 }
 
-void CodeGenerate (char * buffer, int ch_numb, FILE* log_file)
+void Assembler (char * buffer, int ch_numb, FILE* log_file)
 {
     assert (buffer);
     FILE * code_file = fopen ("code.bin", "wb");
-    int cmd = 0;
     int ip = 0;
+    int j  = 0;
+    int i = 0;
     int* code = (int*) calloc (ch_numb, sizeof(int));
     assert (code);
 
-    CmdCode (code, &ip, buffer, log_file);
-    //printf("\n%5s\n", buffer);
-    for (int  i = 0; i < ch_numb; i++)
+    while ((buffer[i + j] == ' ' || buffer[i + j] == '\t') && (buffer[i + j] != '\n'))
+                j++;
+
+
+
+    if (buffer[i + j] == '\n')
+        fprintf (log_file, "ERROR: NFC in line\n");
+    else if (j == 0)
+        CmdCode (code, &ip, buffer, log_file);
+        else
+            CmdCode (code, &ip, buffer + i + j, log_file);
+
+    for (i = 0; i < ch_numb; i++)
     {
         if (buffer[i] == '\n' || buffer[i] == EOF)
         {
-            //printf("\n%5s\n", buffer+i+1);
-            CmdCode (code, &ip, buffer + i + 1, log_file);
+            j = 0;
+            while ((buffer[i + j + 1] == ' ' || buffer[i + j + 1] == '\t') && (buffer[i + j + 1] != '\n'))
+                j++;
+            if (buffer[i + j + 1] == '\n')
+                    fprintf (log_file, "ERROR: NFC in line\n");
+            else
+                CmdCode (code, &ip, buffer + i + j + 1, log_file);
         }
     }
-
-    //printf ("ip = %d\n", ip);
-
-    //for (int i = 0; i < ip; i ++)
-      //  printf("<%d>\n", code[i]);
-
 
     fwrite (code, sizeof(int), ip, code_file);
     free(code);
@@ -66,9 +81,10 @@ int FindArg (char * comand_line, FILE* log_file)
 {
     int ARG = 0;
     int i = 0;
-    int len = strlen (comand_line);
     while ((comand_line[i] == ' ' || comand_line[i] == '\t') && comand_line[i] != '\n')
             i++;
+    if (comand_line[i] == '\n')
+        fprintf (log_file, "ERROR: No arguments detected\n");
     while (comand_line[i] != '\n')
     {
         int digit = comand_line[i] - '0';
@@ -78,7 +94,7 @@ int FindArg (char * comand_line, FILE* log_file)
         }
         else
         {
-            fprintf(log_file, "ERROR: Found argument (%c)\n", comand_line[i]);
+            fprintf(log_file, "ERROR: wrong argument (%c)\n", comand_line[i]);
         }
         i++;
     }
@@ -91,7 +107,6 @@ void CmdCode (int * code, int*ip, char * comand_line, FILE* log_file)
     assert (code);
     assert (comand_line);
     assert (log_file);
-    int ARG = 0;
     int p = 0;
     #include "commands.h"
     {
