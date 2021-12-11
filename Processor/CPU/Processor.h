@@ -1,5 +1,6 @@
 #ifndef PROCESSOR_INCLUDED
 #define PROCESSOR_INCLUDED
+
 #include "Stack.h"
 #include "includes.h"
 
@@ -7,10 +8,12 @@
 struct ProcData
 {
     Stack * stk;
-    int * reg
+    int * reg;
 };
 
+
+
 void Processor (FILE* log_file);
-void RunCode (int* code, int* caret, FILE* log_file);
+void RunCode (char* code, int* caret, FILE* log_file, struct ProcData * Data);
 
 #endif // PROCESSOR_INCLUDED
