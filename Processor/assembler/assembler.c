@@ -1,23 +1,47 @@
 #include "assembler.h"
 
 
-#define DEF_CMD(name, num, args, ...)                                                       \
-                                                                                            \
-                                                                                            \
-    if (StrnCompare(comand_line, #name, strlen(#name)- 1) == 0)                             \
-    {                                                                                       \
-            code[*ip] = num;                                                                \
-            *ip += 1;                                                                       \
-            if (args)                                                                       \
-            {                                                                               \
-                code[*ip] = FindArg(comand_line + strlen(#name), log_file);                 \
-                *ip += 1;                                                                   \
-            }                                                                               \
-                                                                                            \
-    }                                                                                       \
+#define DEF_CMD(name, num, args, ...)                                                                       \
+                                                                                                            \
+                                                                                                            \
+    if (StrnCompare(comand_line, #name, strlen(#name)- 1) == 0)                                             \
+    {                                                                                                       \
+            code[*ip] = num;                                                                                \
+            *ip += 1;                                                                                       \
+            if (args)                                                                                       \
+            {                                                                                               \
+                int i = strlen(#name);                                                                      \
+                                                                                                            \
+                                                                                                            \
+                while ((comand_line[i] == ' ' || comand_line[i] == '\t') && comand_line[i] != '\n')         \
+                    i++;                                                                                    \
+                if (comand_line[i] == '\n')                                                                 \
+                    fprintf(log_file, "ERROR: "#name"must have an argument\n");                             \
+                else                                                                                        \
+                {                                                                                           \
+                    if (comand_line[i] <= '9' && comand_line[i] >= '0')                                     \
+                    {                                                                                       \
+                        code[*ip] = 0;                                                                      \
+                        *ip += 1;                                                                           \
+                        *((int*)(code + *ip)) = FindArg (comand_line + i, log_file);                        \
+                        *ip += 4;                                                                           \
+                    }                                                                                       \
+                    else if (comand_line[i] == 'r')                                                         \
+                    {                                                                                       \
+                        code[*ip] = 1;                                                                      \
+                        *ip += 1;                                                                           \
+                        char reg = FindReg (comand_line + i, log_file);                                     \
+                        code[*ip] = reg;                                                                    \
+                        *ip += 1;                                                                           \
+                    }                                                                                       \
+                }                                                                                           \
+            }                                                                                               \
+                                                                                                            \
+    }                                                                                                       \
     else
 
 
+    //Заменить второй FindArg на FindReg
 int StrnCompare(const char *str1, const char *str2, int n)
 {
     int i = 0;
@@ -39,7 +63,7 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
     int ip = 0;
     int j  = 0;
     int i = 0;
-    int* code = (int*) calloc (ch_numb, sizeof(int));
+    char* code = (char*) calloc (6*ch_numb, sizeof(char));
     assert (code);
 
     while ((buffer[i + j] == ' ' || buffer[i + j] == '\t') && (buffer[i + j] != '\n'))
@@ -68,7 +92,7 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
         }
     }
 
-    fwrite (code, sizeof(int), ip, code_file);
+    fwrite (code, sizeof(char), ip, code_file);
     free(code);
     fclose(code_file);
 }
@@ -81,10 +105,8 @@ int FindArg (char * comand_line, FILE* log_file)
 {
     int ARG = 0;
     int i = 0;
-    while ((comand_line[i] == ' ' || comand_line[i] == '\t') && comand_line[i] != '\n')
-            i++;
-    if (comand_line[i] == '\n')
-        fprintf (log_file, "ERROR: No arguments detected\n");
+    SkipSpaces (comand_line, &i, log_file);
+
     while (comand_line[i] != '\n')
     {
         int digit = comand_line[i] - '0';
@@ -98,11 +120,44 @@ int FindArg (char * comand_line, FILE* log_file)
         }
         i++;
     }
+
     return ARG;
 }
 
 
-void CmdCode (int * code, int*ip, char * comand_line, FILE* log_file)
+
+#define DEF_REG(namer, numr)                                            \
+    if (StrnCompare(comand_line + i, #namer, 2) == 0)                   \
+        REG = numr;                                                     \
+                                                                        \
+    else
+
+
+int FindReg (char * comand_line, FILE * log_file)
+{
+    int REG = 0;
+    int i = 0;
+    SkipSpaces (comand_line, &i, log_file);
+
+    #include "registers.h"
+
+    {
+        fprintf (log_file, "ERROR: Wrong register\n");
+    }
+    return REG;
+}
+
+#undef DEF_REG
+
+
+void SkipSpaces (char* comand_line, int *i, FILE * log_file)
+{
+    while ((comand_line[*i] == ' ' || comand_line[*i] == '\t') && comand_line[*i] != '\n')
+            *i += 1;
+    if (comand_line[*i] == '\n')
+        fprintf (log_file, "ERROR: No arguments detected\n");
+}
+void CmdCode (char * code, int*ip, char * comand_line, FILE* log_file)
 {
     assert (code);
     assert (comand_line);
@@ -122,4 +177,3 @@ void CmdCode (int * code, int*ip, char * comand_line, FILE* log_file)
 
 }
 #undef DEF_CMD
-
