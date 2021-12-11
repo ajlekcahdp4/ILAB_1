@@ -2,7 +2,6 @@
 #include "Stack.h"
 #include <sys/stat.h>
 
-Stack stk = {};//структура со стеком и регистрами
 
 #define DEF_CMD(name, num, args, ...)       \
 case num: {                                 \
@@ -13,6 +12,14 @@ case num: {                                 \
 
 void Processor (FILE* log_file)
 {
+
+    struct ProcData Data;
+    Data.reg = (int *)calloc(5, sizeof(int));
+    Data.stk = (Stack*)calloc(1, sizeof(Stack));
+
+    Data.reg[1] = 1;
+    StackCtor (Data.stk, 10);
+
     FILE* code_file = fopen ("code.bin", "rb");
 
 
@@ -21,19 +28,17 @@ void Processor (FILE* log_file)
     int int_numb = buf.st_size;
 
 
-    int* code = calloc (int_numb, sizeof(char));
-    int_numb = fread (code, sizeof(int), int_numb, code_file);
+    char* code = (char*)calloc (int_numb, sizeof(char));
+    int_numb = fread (code, sizeof(char), int_numb, code_file);
 
-    code = (int*)realloc (code, int_numb * sizeof (int));
 
-    StackCtor (&stk, 10);
-    for (int i = 0; i < int_numb; i++)
+    for (int ip = 0; ip < int_numb; ip++)
     {
-        RunCode(code, &i, log_file);
+        RunCode(code, &ip, log_file, &Data);
     }
 }
 
-void RunCode (int* code, int* ip, FILE* log_file)
+void RunCode (char* code, int* ip, FILE* log_file, struct ProcData * Data)
 {
     int x = 0;
     int y = 0;
