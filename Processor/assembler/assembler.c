@@ -19,7 +19,7 @@
                     fprintf(log_file, "ERROR: "#name"must have an argument\n");                                                                     \
                 else                                                                                                                                \
                 {                                                                                                                                   \
-                    if (StrnCompare(#name, "jmp", 2) == 0)                                                                                          \
+                    if (IsJump(#name))                                                                                          \
                     {                                                                                                                               \
                         SkipSpaces (command_line, &i, log_file);                                                                                    \
                         for (int lp = 0; lp < *labl_cnt; lp++)                                                                                      \
@@ -57,6 +57,26 @@
     }                                                                                                                                               \
     else
 
+
+
+int IsJump (char * name)
+{
+    if (strncmp (name, "jmp", 3) == 0)
+        return 1;
+    if (strcmp(name, "ja") == 0)
+        return 1;
+    if (strcmp(name, "jae") == 0)
+        return 1;
+    if (strcmp(name, "jb") == 0)
+        return 1;
+    if (strcmp(name, "jbe") == 0)
+        return 1;
+    if (strcmp(name, "je") == 0)
+        return 1;
+    if (strcmp(name, "jne") == 0)
+        return 1;
+    return 0;
+}
 
 
 
