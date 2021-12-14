@@ -64,3 +64,71 @@ DEF_CMD(hlt, -1, 0, {
 DEF_CMD (jmp, 9, 1,{
     *ip = code[*ip + 1] - 1;
 })
+
+DEF_CMD (jne, 10, 1,{
+    StackPop(Data->stk, &x);
+    StackPop(Data->stk, &y);
+    if (y != x)
+        *ip = code[*ip + 1] - 1;
+})
+
+DEF_CMD (je, 11, 1,{
+    StackPop(Data->stk, &x);
+    StackPop(Data->stk, &y);
+    if (y == x)
+    {
+        *ip = code[*ip + 1] - 1;
+    }
+    else
+        *ip += 1;
+
+})
+
+DEF_CMD (ja, 12, 1,{
+    StackPop(Data->stk, &x);
+    StackPop(Data->stk, &y);
+    if (x > y)
+    {
+        *ip = code[*ip + 1] - 1;
+    }
+    else
+        *ip += 1;
+
+})
+
+DEF_CMD (jae, 13, 1,{
+    StackPop(Data->stk, &x);
+    StackPop(Data->stk, &y);
+    if (x >= y)
+    {
+        *ip = code[*ip + 1] - 1;
+    }
+    else
+        *ip += 1;
+
+})
+
+DEF_CMD (jb, 14, 1,{
+    StackPop(Data->stk, &x);
+    StackPop(Data->stk, &y);
+    if (x < y)
+    {
+        *ip = code[*ip + 1] - 1;
+    }
+    else
+        *ip += 1;
+
+})
+
+DEF_CMD (jbe, 15, 1,{
+    StackPop(Data->stk, &x);
+    StackPop(Data->stk, &y);
+    if (x <= y)
+    {
+        *ip = code[*ip + 1] - 1;
+    }
+    else
+        *ip += 1;
+
+})
+
