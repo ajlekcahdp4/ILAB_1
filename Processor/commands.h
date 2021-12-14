@@ -9,7 +9,6 @@ DEF_CMD(push, 1, 1, {
         StackPush (Data->stk, Data->reg[(int)(code[*ip + 2])]);
         *ip += 2;
     }
-    StackDump (Data->stk, "push");
 })
 
 DEF_CMD(add, 2, 0, {
@@ -54,11 +53,14 @@ DEF_CMD (pop, 8, 1, {
     StackPop(Data->stk, &x);
     Data->reg[(int)(code[*ip + 2])] = x;
     *ip += 2;
-    StackDump (Data->stk, "pop");
 })
 
 DEF_CMD(hlt, -1, 0, {
     StackDtor(Data->stk);
     free(code);
     fclose(log_file);
+})
+
+DEF_CMD (jmp, 9, 1,{
+    *ip = code[*ip + 1] - 1;
 })
