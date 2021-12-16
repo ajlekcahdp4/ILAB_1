@@ -1,5 +1,9 @@
 #include "Stack.h"
 
+
+static long long HashCalc (Stack * stk);
+static int StackOk (Stack * stk);
+
 static long long HashCalc (Stack * stk)
 {
     long long HASH = 0;
@@ -7,11 +11,12 @@ static long long HashCalc (Stack * stk)
     {
         HASH += ((unsigned int)*((char*)stk->data - sizeof(long long) + i)) * i;
     }
-    for (char* ptr = (char*)&stk->canary1; ptr < (char*)(&stk->canary2 + sizeof (long long)); ptr++)
+    for (char* ptr = (char*)stk; ptr < (char*)(&(stk->canary2)) + sizeof (long long) - 1; ptr++)
     {
         if (ptr < (char*)&stk->hash || ptr >= (char*)&stk->capacity)
             HASH += ((unsigned int)(*ptr))* (int)(ptr - (char*)&stk->canary1);
     }
+    
     return HASH;
 }
 
@@ -145,8 +150,8 @@ void StackCtor(Stack * stk, int capacity)
 
     stk->data = (TYPE_NAME*)((char*)stk->data + 1 * sizeof(long long));
 
-    *PTR_DATA_CANARY1 = (long long)PTR_DATA_CANARY1;
-    *PTR_DATA_CANARY2 = (long long)PTR_DATA_CANARY2;
+    *((long*)((char*)stk->data - sizeof(long long))) = (long long)((char*)stk->data - sizeof(long long));
+    *((long*)((char*)stk->data + stk->capacity * sizeof(TYPE_NAME))) = (long long)((char*)stk->data + stk->capacity * sizeof(TYPE_NAME));
 
 
     stk->size = 0;
@@ -213,6 +218,9 @@ int StackPop(Stack * stk, TYPE_NAME * value)
     return 0;
 }
 
+
+
+
 void StackDtor (Stack * stk)
 {
     assert (stk != 0);
@@ -228,4 +236,5 @@ void StackDtor (Stack * stk)
     }
     fclose(stk->log_file);
     stk->data = ERR_PTR;
+    free(stk);
 }
