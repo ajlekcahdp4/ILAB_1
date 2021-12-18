@@ -328,17 +328,25 @@ void CmdCode (char * code, int*ip, char * command_line, LABLES ** lables, int *l
             if (command_line[len - 1] == ':')
             {
                 p = 0;
-                *labl_cnt += 1;
-                *lables = realloc ((*lables), (*labl_cnt) * sizeof(LABLES));
-                ((*lables)[*labl_cnt - 1]).lable_name = (char*)calloc(len + 1, sizeof(char));
-                ((*lables)[*labl_cnt - 1]).b_numb = *ip + 1;
-
-                while (p < len - 1)
+                if (IsLable(command_line, lables, *labl_cnt))
                 {
-                    ((*lables)[*labl_cnt - 1]).lable_name[p] = command_line[p];
-                    p++;
+                    fprintf (log_file, "ERROR: double defenition of lable <%.*s>\n", len, command_line);
+                    ERROR(ERR_DOUBLE_DEF_OF_LABLE);
                 }
-                ((*lables)[*labl_cnt - 1]).lable_name[p] = '\0';
+                else
+                {
+                    *labl_cnt += 1;
+                    *lables = realloc ((*lables), (*labl_cnt) * sizeof(LABLES));
+                    ((*lables)[*labl_cnt - 1]).lable_name = (char*)calloc(len + 1, sizeof(char));
+                    ((*lables)[*labl_cnt - 1]).b_numb = *ip + 1;
+                    while (p < len - 1)
+                    {
+                        ((*lables)[*labl_cnt - 1]).lable_name[p] = command_line[p];
+                        p++;
+                    }
+                    ((*lables)[*labl_cnt - 1]).lable_name[p] = '\0';
+                }
+                
             }
             else
             {
