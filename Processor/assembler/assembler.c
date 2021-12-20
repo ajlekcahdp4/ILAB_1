@@ -45,9 +45,12 @@
                         }                                                                                                                       \
                         else if (command_line[i] == 'r')                                                                                        \
                         {                                                                                                                       \
+                            char reg = FindReg (command_line + i, log_file);                                                                    \
+                            if (strcmp (#name, "push") == 0)                                                                                    \
+                            {                                                                                                                   \
                             code[*ip] = 1;                                                                                                      \
                             *ip += 1;                                                                                                           \
-                            char reg = FindReg (command_line + i, log_file);                                                                    \
+                            }                                                                                                                   \
                             code[*ip] = reg;                                                                                                    \
                             *ip += 1;                                                                                                           \
                         }                                                                                                                       \
@@ -107,13 +110,10 @@ int FillBuffer (char ** buffer, FILE** log_file)
         assert(!"ERR_CANNOT_ALOCATE_BUFFER");
     }
     ch_numb = fread (*buffer, sizeof (char), ch_numb + 1, reading_file);
-    (*buffer)[ch_numb - 1] = '\0';
+    (*buffer)[ch_numb] = '\0';
     *buffer = realloc (*buffer, ch_numb + 1);
 
-    /*
-    for (int j = 0; j < ch_numb; j++)
-        printf ("%c\n", (*buffer)[j]);
-    */
+    
     fclose(reading_file);
     return ch_numb;
 }
@@ -144,10 +144,13 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
     char* code = (char*) calloc (6*ch_numb, sizeof(char));
     assert (code);
 
+    Stack * Rets = (Stack*)calloc(1, sizeof(Stack)); //добавить функции
+    StackCtor (Rets, 1);    
 
-    int ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, log_file);
-    ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, log_file);
 
+    int ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, Rets, log_file);
+
+    ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, Rets, log_file);
 
 
     fwrite (code, sizeof(char), ip, code_file);
@@ -158,6 +161,7 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
     free(code);
     free(buffer);
     free(lables);
+    free(Rets);
     fclose(code_file);
 }
 
@@ -202,7 +206,10 @@ int FindArg (char * command_line, FILE* log_file)
 
 #define DEF_REG(namer, numr)                                                                \
     if (StrnCompare(command_line + i, #namer, 2) == 0)                                      \
+    {                                                                                       \
+        i += strlen(#namer);                                                                \
         REG = numr;                                                                         \
+    }                                                                                       \
     else
 
 
@@ -262,16 +269,18 @@ void SkipSpaces (char* command_line, int *i, FILE * log_file)
 {
     while ((command_line[*i] == ' ' || command_line[*i] == '\t') && command_line[*i] != '\n')
             *i += 1;
+    /*
     if (command_line[*i] == '\n')
     {
         fprintf (log_file, "ERROR: No commands or arguments detected\n");//можно убрать проверку на \n чтобы пустые строки скипать
         ERROR (ERR_NO_CMD_IN_STR);
     }
+    */
 }
 
 
 
-int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, int *labl_cnt, FILE* log_file)
+int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, int *labl_cnt, Stack*Rets, FILE* log_file)
 {
     int i = 0;
     int ip = 0;
@@ -286,7 +295,7 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
         ERROR (ERR_NO_COMMAND_IN_LINE);
     }
     else
-        CmdCode (code, &ip, buffer + i, lables, labl_cnt, log_file, run_numb);
+        CmdCode (code, &ip, buffer + i, lables, labl_cnt, Rets, log_file, run_numb);
 
 
     for (i = 0; i < ch_numb; i++)
@@ -301,7 +310,7 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
                     ERROR (ERR_NO_COMMAND_IN_LINE);
                 }
             else
-                CmdCode (code, &ip, buffer + i + 1, lables, labl_cnt, log_file, run_numb);
+                CmdCode (code, &ip, buffer + i + 1, lables, labl_cnt, Rets, log_file, run_numb);
         }
     }
     run_numb++;
@@ -312,7 +321,7 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
 
 
 
-void CmdCode (char * code, int*ip, char * command_line, LABLES ** lables, int *labl_cnt, FILE* log_file, int run_numb)
+void CmdCode (char * code, int*ip, char * command_line, LABLES ** lables, int *labl_cnt, Stack *Rets, FILE* log_file, int run_numb)
 {
     assert (code);
     assert (command_line);
