@@ -51,84 +51,40 @@ DEF_CMD (in, 7, 0, {
 
 DEF_CMD (pop, 8, 1, {
     StackPop(Data->stk, &x);
-    Data->reg[(int)(code[*ip + 2])] = x;
-    *ip += 2;
+    Data->reg[(int)(code[*ip + 1])] = x;
+    *ip += 1;
 })
 
 DEF_CMD(hlt, -1, 0, {
     StackDtor(Data->stk);
+    free(Data->reg);
     free(code);
     fclose(log_file);
 })
 
 DEF_CMD (jmp, 9, 1,{
-    *ip = code[*ip + 1] - 1;
+    *ip = *(code + *ip + 1) - 1;
 })
 
-DEF_CMD (jne, 10, 1,{
-    StackPop(Data->stk, &x);
-    StackPop(Data->stk, &y);
-    if (y != x)
-        *ip = code[*ip + 1] - 1;
+#define DEF_JUMP(name, num, cond)                               \
+                                                                \
+DEF_CMD (name, num, 1, {                                        \
+    StackPop(Data->stk, &x);                                    \
+    StackPop(Data->stk, &y);                                    \
+    if (y cond x)                                               \
+        *ip = code[*ip + 1] - 2;                                \
+    else                                                        \
+        *ip += 1;                                               \
 })
 
-DEF_CMD (je, 11, 1,{
-    StackPop(Data->stk, &x);
-    StackPop(Data->stk, &y);
-    if (y == x)
-    {
-        *ip = code[*ip + 1] - 1;
-    }
-    else
-        *ip += 1;
+#include "jumps.h"
 
+#undef DEF_JUMP
+
+DEF_CMD (dump, 16, 0,{
+    StackDump(Data->stk, "Check");
 })
 
-DEF_CMD (ja, 12, 1,{
-    StackPop(Data->stk, &x);
-    StackPop(Data->stk, &y);
-    if (x > y)
-    {
-        *ip = code[*ip + 1] - 1;
-    }
-    else
-        *ip += 1;
 
-})
 
-DEF_CMD (jae, 13, 1,{
-    StackPop(Data->stk, &x);
-    StackPop(Data->stk, &y);
-    if (x >= y)
-    {
-        *ip = code[*ip + 1] - 1;
-    }
-    else
-        *ip += 1;
-
-})
-
-DEF_CMD (jb, 14, 1,{
-    StackPop(Data->stk, &x);
-    StackPop(Data->stk, &y);
-    if (x < y)
-    {
-        *ip = code[*ip + 1] - 1;
-    }
-    else
-        *ip += 1;
-
-})
-
-DEF_CMD (jbe, 15, 1,{
-    StackPop(Data->stk, &x);
-    StackPop(Data->stk, &y);
-    if (x <= y)
-    {
-        *ip = code[*ip + 1] - 1;
-    }
-    else
-        *ip += 1;
-
-})
 
