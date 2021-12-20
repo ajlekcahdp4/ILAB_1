@@ -15,7 +15,7 @@
                     i++;                                                                                                                        \
                 if (command_line[i] == '\n' || command_line[i] == '\r')                                                                         \
                 {                                                                                                                               \
-                    fprintf(log_file, "ERROR: "#name"must have an argument\n");                                                                 \
+                    fprintf(log_file, "ERROR: "#name" must have an argument\n");                                                                 \
                     ERROR (ERR_NO_ARGUMENT);                                                                                                    \
                 }                                                                                                                               \
                                                                                                                                                 \
@@ -24,13 +24,17 @@
                     if (IsJump(#name))                                                                                                          \
                     {                                                                                                                           \
                         SkipSpaces (command_line, &i, log_file);                                                                                \
+                        *((long long*)(code + *ip)) = -1LL;                                                                                     \
+                        *ip +=8;                                                                                                                \
                         for (int lp = 0; lp < *labl_cnt; lp++)                                                                                  \
                         {                                                                                                                       \
                             if (strncmp (command_line + i, ((*lables)[lp]).lable_name, strlen(((*lables)[lp]).lable_name)) == 0)                \
                             {                                                                                                                   \
+                                *ip -= 8;\
                                 IsEndOfStr (command_line + strlen(((*lables)[lp]).lable_name), &i, log_file);                                   \
-                                code [*ip] = ((*lables)[lp]).b_numb;                                                                            \
-                                *ip += 1;                                                                                                       \
+                                *((long long*)(code + *ip)) = ((*lables)[lp]).b_numb;                                                           \
+                                *ip += 8;                                                                                                       \
+                                break;                                                                                                          \
                             }                                                                                                                   \
                         }                                                                                                                       \
                     }                                                                                                                           \
@@ -148,8 +152,7 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
     StackCtor (Rets, 1);    
 
 
-    int ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, Rets, log_file);
-
+    long long ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, Rets, log_file);
     ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, Rets, log_file);
 
 
@@ -280,10 +283,10 @@ void SkipSpaces (char* command_line, int *i, FILE * log_file)
 
 
 
-int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, int *labl_cnt, Stack*Rets, FILE* log_file)
+long long  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, int *labl_cnt, Stack*Rets, FILE* log_file)
 {
     int i = 0;
-    int ip = 0;
+    long long ip = 0;
     static int run_numb = 0;
 
     while ((buffer[i] == ' ' || buffer[i] == '\t') && (buffer[i] != '\n'))
@@ -321,7 +324,7 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
 
 
 
-void CmdCode (char * code, int*ip, char * command_line, LABLES ** lables, int *labl_cnt, Stack *Rets, FILE* log_file, int run_numb)
+void CmdCode (char * code, long long *ip, char * command_line, LABLES ** lables, int *labl_cnt, Stack *Rets, FILE* log_file, int run_numb)
 {
     assert (code);
     assert (command_line);
@@ -347,7 +350,7 @@ void CmdCode (char * code, int*ip, char * command_line, LABLES ** lables, int *l
                     *labl_cnt += 1;
                     *lables = realloc ((*lables), (*labl_cnt) * sizeof(LABLES));
                     ((*lables)[*labl_cnt - 1]).lable_name = (char*)calloc(len + 1, sizeof(char));
-                    ((*lables)[*labl_cnt - 1]).b_numb = *ip + 1;
+                    ((*lables)[*labl_cnt - 1]).b_numb = *ip;
                     while (p < len - 1)
                     {
                         ((*lables)[*labl_cnt - 1]).lable_name[p] = command_line[p];
