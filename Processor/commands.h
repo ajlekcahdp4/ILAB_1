@@ -58,12 +58,13 @@ DEF_CMD (pop, 8, 1, {
 DEF_CMD(hlt, -1, 0, {
     StackDtor(Data->stk);
     free(Data->reg);
-    free(code);
+    free(code); 
+    StackDtor(Rets);
     fclose(log_file);
 })
 
 DEF_CMD (jmp, 9, 1,{
-    *ip = *((long long*)(code + *ip + 1)) - 1;
+    *ip = *((int*)(code + *ip + 1)) - 1;
 })
 
 #define DEF_JUMP(name, num, cond)                               \
@@ -72,9 +73,9 @@ DEF_CMD (name, num, 1, {                                        \
     StackPop(Data->stk, &x);                                    \
     StackPop(Data->stk, &y);                                    \
     if (y cond x)                                               \
-        *ip = *((long long*)(code + *ip + 1)) - 1;              \
+        *ip = *((int*)(code + *ip + 1)) - 1;                    \
     else                                                        \
-        *ip += 8;                                               \
+        *ip += 4;                                               \
 })
 
 #include "jumps.h"
@@ -85,7 +86,14 @@ DEF_CMD (dump, 16, 0,{
     StackDump(Data->stk, "Check");
 })
 
+DEF_CMD (call, 17, 1, {
+    StackPush (Rets, *ip + 4);
+    *ip = *((int*)(code + *ip + 1)) - 1;
+})
 
-
+DEF_CMD (ret, 18, 0, {
+    StackPop (Rets, &x);
+    *ip = x;
+})
 
 
