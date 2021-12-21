@@ -9,34 +9,33 @@
             if (args)                                                                                                                           \
             {                                                                                                                                   \
                 int i = strlen(#name);                                                                                                          \
-                                                                                                                                                \
-                                                                                                                                                \
                 while ((command_line[i] == ' ' || command_line[i] == '\t') && command_line[i] != '\n')                                          \
                     i++;                                                                                                                        \
                 if (command_line[i] == '\n' || command_line[i] == '\r')                                                                         \
                 {                                                                                                                               \
-                    fprintf(log_file, "ERROR: "#name" must have an argument\n");                                                                 \
+                    fprintf(log_file, "ERROR: "#name" must have an argument\n");                                                                \
                     ERROR (ERR_NO_ARGUMENT);                                                                                                    \
                 }                                                                                                                               \
-                                                                                                                                                \
                 else                                                                                                                            \
                 {                                                                                                                               \
                     if (IsJump(#name))                                                                                                          \
                     {                                                                                                                           \
-                        SkipSpaces (command_line, &i, log_file);                                                                                \
-                        *((long long*)(code + *ip)) = -1LL;                                                                                     \
-                        *ip +=8;                                                                                                                \
+                        *((int*)(code + *ip)) = -1;                                                                                             \
                         for (int lp = 0; lp < *labl_cnt; lp++)                                                                                  \
                         {                                                                                                                       \
                             if (strncmp (command_line + i, ((*lables)[lp]).lable_name, strlen(((*lables)[lp]).lable_name)) == 0)                \
                             {                                                                                                                   \
-                                *ip -= 8;\
                                 IsEndOfStr (command_line + strlen(((*lables)[lp]).lable_name), &i, log_file);                                   \
-                                *((long long*)(code + *ip)) = ((*lables)[lp]).b_numb;                                                           \
-                                *ip += 8;                                                                                                       \
+                                *((int*)(code + *ip)) = ((*lables)[lp]).b_numb;                                                                 \
                                 break;                                                                                                          \
                             }                                                                                                                   \
                         }                                                                                                                       \
+                        if (run_numb == 2 && *((int*)(code + *ip)) == -1)                                                                   \
+                        {                                                                                                                       \
+                            fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");                                            \
+                            ERROR (ERR_FUNC_WITHOUT_DEFENITION);                                                                                \
+                        }                                                                                                                       \
+                        *ip += 4;\
                     }                                                                                                                           \
                     else                                                                                                                        \
                     {                                                                                                                           \
@@ -91,6 +90,8 @@ int IsJump (char * name)
     if (strcmp(name, "je") == 0)
         return 1;
     if (strcmp(name, "jne") == 0)
+        return 1;
+    if (strcmp(name, "call") == 0)
         return 1;
     return 0;
 }
@@ -147,13 +148,12 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
 
     char* code = (char*) calloc (6*ch_numb, sizeof(char));
     assert (code);
-
-    Stack * Rets = (Stack*)calloc(1, sizeof(Stack)); //добавить функции
-    StackCtor (Rets, 1);    
+   
 
 
-    long long ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, Rets, log_file);
-    ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, Rets, log_file);
+    int ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, log_file);
+    ip = TranslateToCode (buffer, ch_numb, code, &lables, &labl_cnt, log_file);
+    LablesCheck(lables, labl_cnt, log_file);
 
 
     fwrite (code, sizeof(char), ip, code_file);
@@ -163,8 +163,7 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
 
     free(code);
     free(buffer);
-    free(lables);
-    free(Rets);
+    free(lables);   
     fclose(code_file);
 }
 
@@ -268,28 +267,33 @@ int IsLable (char* command_line, LABLES** lables, int labl_cnt)
     return res;
 }
 
+
+void LablesCheck (LABLES *lables, int labl_cnt, FILE* log_file)
+{
+    for (int i = 0; i < labl_cnt; i++)
+    {
+        if ((lables[i]).b_numb == -1)
+        {
+            fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");
+            ERROR (ERR_FUNC_WITHOUT_DEFENITION);
+        }
+    }
+}
 void SkipSpaces (char* command_line, int *i, FILE * log_file)
 {
     while ((command_line[*i] == ' ' || command_line[*i] == '\t') && command_line[*i] != '\n')
             *i += 1;
-    /*
-    if (command_line[*i] == '\n')
-    {
-        fprintf (log_file, "ERROR: No commands or arguments detected\n");//можно убрать проверку на \n чтобы пустые строки скипать
-        ERROR (ERR_NO_CMD_IN_STR);
-    }
-    */
 }
 
 
 
-long long  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, int *labl_cnt, Stack*Rets, FILE* log_file)
+int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, int *labl_cnt, FILE* log_file)
 {
     int i = 0;
-    long long ip = 0;
-    static int run_numb = 0;
+    int ip = 0;
+    static int run_numb = 1;
 
-    while ((buffer[i] == ' ' || buffer[i] == '\t') && (buffer[i] != '\n'))
+    while ((buffer[i] == ' ' || buffer[i] == '\t' ||buffer[i] == '\n' || buffer[i] == '\r') && buffer[i] != '\0')
                 i++;
 
     if (buffer[i] == '\n')
@@ -298,22 +302,16 @@ long long  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** labl
         ERROR (ERR_NO_COMMAND_IN_LINE);
     }
     else
-        CmdCode (code, &ip, buffer + i, lables, labl_cnt, Rets, log_file, run_numb);
+        CmdCode (code, &ip, buffer + i, lables, labl_cnt, log_file, run_numb);
 
 
     for (i = 0; i < ch_numb; i++)
     {
-        if (buffer[i] == '\n' || buffer[i] == EOF)
+        if (buffer[i] == '\n')
         {
-            while ((buffer[i + 1] == ' ' || buffer[i+ 1] == '\t') && (buffer[i + 1] != '\n'))
+            while (buffer[i + 1] == ' ' || buffer[i + 1] == '\t' || buffer[i + 1] == '\n')
                 i++;
-            if (buffer[i + 1] == '\n')
-                {
-                    fprintf (log_file, "ERROR: NFC in line\n");
-                    ERROR (ERR_NO_COMMAND_IN_LINE);
-                }
-            else
-                CmdCode (code, &ip, buffer + i + 1, lables, labl_cnt, Rets, log_file, run_numb);
+            CmdCode (code, &ip, buffer + i + 1, lables, labl_cnt, log_file, run_numb);
         }
     }
     run_numb++;
@@ -324,7 +322,7 @@ long long  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** labl
 
 
 
-void CmdCode (char * code, long long *ip, char * command_line, LABLES ** lables, int *labl_cnt, Stack *Rets, FILE* log_file, int run_numb)
+void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *labl_cnt, FILE* log_file, int run_numb)
 {
     assert (code);
     assert (command_line);
@@ -332,7 +330,7 @@ void CmdCode (char * code, long long *ip, char * command_line, LABLES ** lables,
     int p = 0;
     #include "commands.h"
     {
-        if (run_numb == 0)
+        if (run_numb == 1)
         {
             int len = 0;
             while (command_line[len] != ' ' && command_line[len] != '\t' && command_line[len] != '\n')
@@ -360,7 +358,7 @@ void CmdCode (char * code, long long *ip, char * command_line, LABLES ** lables,
                 }
                 
             }
-            else
+            else if (command_line[len - 1] != '\0')
             {
                 p = 0;
                 fprintf(log_file, "ERROR: No fucking command or lable in line.\n");
@@ -376,7 +374,7 @@ void CmdCode (char * code, long long *ip, char * command_line, LABLES ** lables,
         }
         else
         {
-            if (IsLable (command_line, lables, *labl_cnt) != 1)
+            if (IsLable (command_line, lables, *labl_cnt) != 1 && command_line[0] != '\0')
             {
                 fprintf(log_file, "ERROR: No fucking command or lable in line.\n");
                 fprintf (log_file, "line: <");
@@ -385,6 +383,7 @@ void CmdCode (char * code, long long *ip, char * command_line, LABLES ** lables,
                     fputc (command_line[p], log_file);
                     p++;
                 }
+                fclose (log_file);
                 fprintf (log_file, ">\n");
                 ERROR (ERR_WRONG_ARGUMENT);
             }
