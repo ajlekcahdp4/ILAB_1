@@ -30,7 +30,7 @@
                                 break;                                                                                                          \
                             }                                                                                                                   \
                         }                                                                                                                       \
-                        if (run_numb == 2 && *((int*)(code + *ip)) == -1)                                                                   \
+                        if (run_numb == 2 && *((int*)(code + *ip)) == -1)                                                                       \
                         {                                                                                                                       \
                             fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");                                            \
                             ERROR (ERR_FUNC_WITHOUT_DEFENITION);                                                                                \
@@ -309,7 +309,7 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
     {
         if (buffer[i] == '\n')
         {
-            while (buffer[i + 1] == ' ' || buffer[i + 1] == '\t' || buffer[i + 1] == '\n')
+            while (buffer[i + 1] == ' ' || buffer[i + 1] == '\t' || buffer[i + 1] == '\n' || buffer[i + 1] == '\r')
                 i++;
             CmdCode (code, &ip, buffer + i + 1, lables, labl_cnt, log_file, run_numb);
         }
@@ -358,19 +358,7 @@ void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *
                 }
                 
             }
-            else if (command_line[len - 1] != '\0')
-            {
-                p = 0;
-                fprintf(log_file, "ERROR: No fucking command or lable in line.\n");
-                fprintf (log_file, "line: <");
-                while (command_line[p] != '\n')
-                {
-                    fputc (command_line[p], log_file);
-                    p++;
-                }
-                fprintf (log_file, ">\n");
-                ERROR (ERR_WRONG_ARGUMENT);
-            }
+            
         }
         else
         {
