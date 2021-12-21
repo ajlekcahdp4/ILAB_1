@@ -9,7 +9,7 @@
             if (args)                                                                                                                           \
             {                                                                                                                                   \
                 int i = strlen(#name);                                                                                                          \
-                while ((command_line[i] == ' ' || command_line[i] == '\t') && command_line[i] != '\n')                                          \
+                while ((command_line[i] == ' ' || command_line[i] == '\t') && command_line[i] != '\n' && command_line[i] != '\r')                                          \
                     i++;                                                                                                                        \
                 if (command_line[i] == '\n' || command_line[i] == '\r')                                                                         \
                 {                                                                                                                               \
@@ -32,6 +32,7 @@
                         }                                                                                                                       \
                         if (run_numb == 2 && *((int*)(code + *ip)) == -1)                                                                       \
                         {                                                                                                                       \
+                            printf("error in <%d>\n", *((code + *ip - 1)));\
                             fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");                                            \
                             ERROR (ERR_FUNC_WITHOUT_DEFENITION);                                                                                \
                         }                                                                                                                       \
@@ -99,10 +100,10 @@ int IsJump (char * name)
 
 
 
-int FillBuffer (char ** buffer, FILE** log_file)
+int FillBuffer (char* file_name, char ** buffer, FILE** log_file)
 {
     *log_file = fopen ("Proc_log_file.txt", "w");
-    FILE * reading_file = fopen ("reading_file.txt", "r");
+    FILE * reading_file = fopen (file_name, "r");
     long cur_pos = ftell (reading_file);
     fseek (reading_file, 0L, SEEK_END);
     int ch_numb = ftell (reading_file);
@@ -274,6 +275,8 @@ void LablesCheck (LABLES *lables, int labl_cnt, FILE* log_file)
     {
         if ((lables[i]).b_numb == -1)
         {
+            $meow
+            fprintf(log_file, "error in lable<%s>\n", lables[i].lable_name);
             fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");
             ERROR (ERR_FUNC_WITHOUT_DEFENITION);
         }
@@ -296,13 +299,8 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
     while ((buffer[i] == ' ' || buffer[i] == '\t' ||buffer[i] == '\n' || buffer[i] == '\r') && buffer[i] != '\0')
                 i++;
 
-    if (buffer[i] == '\n')
-    {
-        fprintf (log_file, "ERROR: NFC in line\n");
-        ERROR (ERR_NO_COMMAND_IN_LINE);
-    }
-    else
-        CmdCode (code, &ip, buffer + i, lables, labl_cnt, log_file, run_numb);
+    
+    CmdCode (code, &ip, buffer + i, lables, labl_cnt, log_file, run_numb);
 
 
     for (i = 0; i < ch_numb; i++)
@@ -333,7 +331,7 @@ void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *
         if (run_numb == 1)
         {
             int len = 0;
-            while (command_line[len] != ' ' && command_line[len] != '\t' && command_line[len] != '\n')
+            while (command_line[len] != ' ' && command_line[len] != '\t' && command_line[len] != '\n'&& command_line[len] != '\r')
                 len++;
             if (command_line[len - 1] == ':')
             {
