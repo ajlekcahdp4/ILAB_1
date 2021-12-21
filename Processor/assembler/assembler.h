@@ -14,7 +14,7 @@ typedef struct LABLES LABLES;
     fclose(log_file);                               \
     assert(!#str);                                  \
 
-int     FillBuffer      (char ** buffer, FILE** log_file);
+int     FillBuffer      (char* file_name, char ** buffer, FILE** log_file);
 void    Assembler       (char* buffer, int ch_numb, FILE* log_file);
 int     TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, int *labl_cnt, FILE* log_file);
 int     StrnCompare     (const char *str1, const char *str2, int n);
