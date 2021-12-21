@@ -2,16 +2,12 @@ in
 pop rax
 push rax
 pop rbx
-
-call Func
-
-
+call fact_calc
 push rax
 out
 hlt
 
-
-Func:
+fact_calc:
     next:
         push rbx
         push 1
