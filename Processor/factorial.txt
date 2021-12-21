@@ -1,0 +1,27 @@
+in
+pop rax
+push rax
+pop rbx
+
+call Func
+
+
+push rax
+out
+hlt
+
+
+Func:
+    next:
+        push rbx
+        push 1
+        sub
+        pop rbx
+        push rbx
+        push rax
+        mul
+        pop rax
+        push rbx
+        push 1
+    jne next
+ret
