@@ -9,7 +9,7 @@
             if (args)                                                                                                                           \
             {                                                                                                                                   \
                 int i = strlen(#name);                                                                                                          \
-                while ((command_line[i] == ' ' || command_line[i] == '\t') && command_line[i] != '\n' && command_line[i] != '\r')                                          \
+                while ((command_line[i] == ' ' || command_line[i] == '\t') && command_line[i] != '\n' && command_line[i] != '\r')               \
                     i++;                                                                                                                        \
                 if (command_line[i] == '\n' || command_line[i] == '\r')                                                                         \
                 {                                                                                                                               \
@@ -32,11 +32,10 @@
                         }                                                                                                                       \
                         if (run_numb == 2 && *((int*)(code + *ip)) == -1)                                                                       \
                         {                                                                                                                       \
-                            printf("error in <%d>\n", *((code + *ip - 1)));\
                             fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");                                            \
                             ERROR (ERR_FUNC_WITHOUT_DEFENITION);                                                                                \
                         }                                                                                                                       \
-                        *ip += 4;\
+                        *ip += 4;                                                                                                               \
                     }                                                                                                                           \
                     else                                                                                                                        \
                     {                                                                                                                           \
@@ -275,7 +274,6 @@ void LablesCheck (LABLES *lables, int labl_cnt, FILE* log_file)
     {
         if ((lables[i]).b_numb == -1)
         {
-            $meow
             fprintf(log_file, "error in lable<%s>\n", lables[i].lable_name);
             fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");
             ERROR (ERR_FUNC_WITHOUT_DEFENITION);
@@ -303,7 +301,7 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
     CmdCode (code, &ip, buffer + i, lables, labl_cnt, log_file, run_numb);
 
 
-    for (i = 0; i < ch_numb; i++)
+    for (i = 0; i < ch_numb -1; i++)
     {
         if (buffer[i] == '\n')
         {
@@ -325,6 +323,11 @@ void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *
     assert (code);
     assert (command_line);
     assert (log_file);
+    assert(command_line);
+    assert(ip);
+    assert(lables);
+    assert(labl_cnt);
+
     int p = 0;
     #include "commands.h"
     {
@@ -354,6 +357,7 @@ void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *
                     }
                     ((*lables)[*labl_cnt - 1]).lable_name[p] = '\0';
                 }
+                IsEndOfStr(command_line, &len, log_file);
                 
             }
             
