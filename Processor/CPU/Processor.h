@@ -1,9 +1,8 @@
 #ifndef PROCESSOR_INCLUDED
 #define PROCESSOR_INCLUDED
 
-#include "Stack.h"
 #include "includes.h"
-
+#include "Stack.h"
 
 struct ProcData
 {
