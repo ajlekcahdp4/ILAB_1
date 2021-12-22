@@ -1,5 +1,4 @@
 #include "Processor.h"
-#include "Stack.h"
 #include <sys/stat.h>
 
 
@@ -10,6 +9,7 @@ case num: {                                 \
     }                                       \
 
 
+#define poop
 void Processor (FILE* log_file)
 {
 
@@ -17,10 +17,10 @@ void Processor (FILE* log_file)
     Data.reg = (int *)calloc(5, sizeof(int));
     Data.stk = (Stack*)calloc(1, sizeof(Stack));
 
-    StackCtor (Data.stk, 10);
+    StackCtor (Data.stk, 8, "Data_stk_logfile.txt");
 
     Stack * Rets = (Stack*) calloc (1, sizeof (Stack));
-    StackCtor(Rets, 1);
+    StackCtor(Rets, 1, "Rets_logfile.txt");
 
 
     FILE* code_file = fopen ("code.bin", "rb");
@@ -34,10 +34,12 @@ void Processor (FILE* log_file)
     char* code = (char*)calloc (int_numb, sizeof(char));
     int_numb = fread (code, sizeof(char), int_numb, code_file);
     fclose (code_file);
-    for (int ip = 0; code[ip] != -1; ip++)
+    int ip = 0;
+    for ( ip = 0; code[ip] != -1; ip++)
     {
         RunCode(code, &ip, log_file, Rets, &Data);
     }
+    RunCode(code, &ip, log_file, Rets, &Data);
 }
 
 void RunCode (char* code, int* ip, FILE* log_file, Stack* Rets, struct ProcData * Data)
