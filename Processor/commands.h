@@ -1,4 +1,4 @@
-DEF_CMD(push, 1, 1, {
+DEFDEF_CMD(push, 1, 1, {
     if (code[*ip + 1] == 0)
     {
         StackPush (Data->stk, code[*ip+2]);
@@ -95,5 +95,6 @@ DEF_CMD (ret, 18, 0, {
     StackPop (Rets, &x);
     *ip = x;
 })
+
 
 
