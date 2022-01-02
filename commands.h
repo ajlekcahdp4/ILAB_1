@@ -14,6 +14,7 @@ DEF_CMD(push, 1, 1, {
     }
     if (cmd & (1<<5))
     {
+        delay(200000);
         arg = RAM[arg];
     }
     StackPush (Data->stk, arg);
@@ -28,6 +29,7 @@ DEF_CMD (pop, 2, 1, {
     *ip += 1;
     if (cmd & (1<<5))
     {
+        delay(200000);
         if (cmd & (1<<6))
         {
             index += Data->reg[ *(code + *ip) ];
@@ -126,7 +128,8 @@ DEF_CMD (in, 17, 0, {
 DEF_CMD(hlt, -1, 0, {
     StackDtor(Data->stk);
     free(Data->reg);
-    free(code); 
+    free(code);
+    free(RAM);
     StackDtor(Rets);
     fclose(log_file);
 })

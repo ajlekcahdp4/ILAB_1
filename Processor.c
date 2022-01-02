@@ -1,6 +1,6 @@
 #include "Processor.h"
 #include <sys/stat.h>
-
+#include <time.h>
 
 int BitComp (char a, char b, int n)
 {
@@ -12,6 +12,12 @@ int BitComp (char a, char b, int n)
         i++;
     }
     return 1;
+}
+
+void delay (int ms)
+{
+    int c = clock() + ms;
+    while (clock() < c) {;}
 }
 
 void Processor (FILE* log_file)
