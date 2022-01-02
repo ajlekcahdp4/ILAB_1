@@ -13,6 +13,6 @@ struct ProcData
 
 
 void Processor (FILE* log_file);
-void RunCode (char* code, int* ip, FILE* log_file, Stack* Rets, struct ProcData * Data);
+void RunCode (char* code, int* ip, FILE* log_file, Stack* Rets, struct ProcData * Data, int* RAM);
 
 #endif // PROCESSOR_INCLUDED

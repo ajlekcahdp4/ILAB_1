@@ -1,15 +1,25 @@
 #include "assembler.h"
+
+#define NOT_END (command_line[i] != '\r' && command_line[i] != '\n' && command_line[i] != '\0')
+
+#define K_FLAG ((*(code + *ip - 1)) & (1 << 7))
+#define R_FLAG ((*(code + *ip - 1)) & (1 << 6))
+#define M_FLAG ((*(code + *ip - 1)) & (1 << 5))
+
+
+
 #define DEF_CMD(name, num, args, ...)                                                                                                       \
     if (StrnCompare(command_line, #name, strlen(#name)- 1) == 0)                                                                            \
     {                                                                                                                                       \
         code[*ip] = num;                                                                                                                    \
+        int cmd = *ip;                                                                                                                      \
         *ip += 1;                                                                                                                           \
         if (args)                                                                                                                           \
         {                                                                                                                                   \
             int i = strlen(#name);                                                                                                          \
-            while ((command_line[i] == ' ' || command_line[i] == '\t') && command_line[i] != '\n' && command_line[i] != '\r')               \
+            while ((command_line[i] == ' ' || command_line[i] == '\t') && NOT_END )                                                         \
                 i++;                                                                                                                        \
-            if (command_line[i] == '\n' || command_line[i] == '\r')                                                                         \
+            if (command_line[i] == '\n' || command_line[i] == '\r' || command_line[i] == '\0')                                              \
             {                                                                                                                               \
                 fprintf(log_file, "ERROR: "#name" must have an argument\n");                                                                \
                 ERROR (ERR_NO_ARGUMENT);                                                                                                    \
@@ -18,7 +28,6 @@
             {                                                                                                                               \
                 if (IsJump(#name))                                                                                                          \
                 {                                                                                                                           \
-                    (*(code + *ip - 1)) = (*(code + *ip - 1)) | (1 << 7);                                                                   \
                     *((int*)(code + *ip)) = -1;                                                                                             \
                     for (int lp = 0; lp < *labl_cnt; lp++)                                                                                  \
                     {                                                                                                                       \
@@ -31,36 +40,52 @@
                     }                                                                                                                       \
                     if (run_numb == 2 && *((int*)(code + *ip)) == -1)                                                                       \
                     {                                                                                                                       \
-                        fprintf (log_file, "ERROR: function(jump) without defenition(lable)\n");                                            \
+                        fprintf (log_file, "ERROR: function(or jump) without defenition(or lable)\n");                                      \
                         ERROR (ERR_FUNC_WITHOUT_DEFENITION);                                                                                \
                     }                                                                                                                       \
                     *ip += 4;                                                                                                               \
                 }                                                                                                                           \
                 else                                                                                                                        \
                 {                                                                                                                           \
-                    if (command_line[i] <= '9' && command_line[i] >= '0' || command_line[i] == '-')                                         \
+                    int flag_cnt = 0;                                                                                                       \
+                    if (command_line[i] == '[')                                                                                             \
                     {                                                                                                                       \
-                        (*(code + *ip - 1)) = (*(code + *ip - 1)) | (1 << 7);                                                               \
-                        code[*ip] = 0;                                                                                                      \
-                        *ip += 1;                                                                                                           \
-                        *((int*)(code + *ip)) = FindArg (command_line + i, log_file);                                                       \
-                        *ip += 4;                                                                                                           \
-                    }                                                                                                                       \
-                    else if (command_line[i] == 'r')                                                                                        \
-                    {                                                                                                                       \
-                        (*(code + *ip - 1)) = (*(code + *ip - 1)) | (1 << 6);                                                               \
-                        char reg = FindReg (command_line + i, log_file);                                                                    \
-                        if (strcmp (#name, "push") == 0)                                                                                    \
+                        int j = i;                                                                                                          \
+                        while (NOT_END)                                                                                                     \
                         {                                                                                                                   \
-                        code[*ip] = 1;                                                                                                      \
-                        *ip += 1;                                                                                                           \
+                            if (command_line[j] == ']')                                                                                     \
+                            {                                                                                                               \
+                                (*(code + cmd)) = (*(code + cmd)) | (1 << 5);                                                               \
+                                flag_cnt++;                                                                                                 \
+                                break;                                                                                                      \
+                            }                                                                                                               \
+                            j++;                                                                                                            \
                         }                                                                                                                   \
+                        i++;                                                                                                                \
+                        SkipSpaces(command_line, &i, log_file);                                                                             \
+                    }                                                                                                                       \
+                    if (command_line[i] == 'r' && NOT_END )                                                                                 \
+                    {                                                                                                                       \
+                        (*(code + cmd)) = (*(code + cmd)) | (1 << 6);                                                                       \
+                        flag_cnt++;                                                                                                         \
+                        char reg = FindReg (command_line, &i, log_file);                                                                    \
+                        if (command_line[i] == ']')                                                                                         \
+                            i++;                                                                                                            \
                         code[*ip] = reg;                                                                                                    \
                         *ip += 1;                                                                                                           \
                     }                                                                                                                       \
-                    else                                                                                                                    \
+                    if ((command_line[i] <= '9' && command_line[i] >= '0' || command_line[i] == '-' || command_line[i] == '+') && NOT_END ) \
                     {                                                                                                                       \
-                        fprintf (log_file, "ERROR: Wrong argument of cmd "#name "\n");                                                      \
+                        (*(code + cmd)) = (*(code + cmd)) | (1 << 7);                                                                       \
+                        *((int*)(code + *ip)) = FindArg (command_line, &i, log_file);                                                       \
+                        if (command_line[i] == ']')                                                                                         \
+                            i++;                                                                                                            \
+                        flag_cnt++;                                                                                                         \
+                        *ip += 4;                                                                                                           \
+                    }                                                                                                                       \
+                    if (flag_cnt == 0)                                                                                                      \
+                    {                                                                                                                       \
+                        fprintf (log_file, "ERROR: Wrong argument of cmd "#name"\n");                                                       \
                         ERROR (ERR_WRONG_ARGUMENT);                                                                                         \
                     }                                                                                                                       \
                 }                                                                                                                           \
@@ -73,10 +98,8 @@
         }                                                                                                                                   \
     }                                                                                                                                       \
     else
-
-
 //===========================================================================================================================================
-
+//Залупить проверку аргумента
 void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *labl_cnt, FILE* log_file, int run_numb)
 {
     assert (code);
@@ -141,7 +164,6 @@ void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *
 
 }
 #undef DEF_CMD
-
 
 
 int IsJump (char * name)
@@ -240,43 +262,49 @@ void Assembler (char * buffer, int ch_numb, FILE* log_file)
 
 
 
-int FindArg (char * command_line, FILE* log_file)
+int FindArg (char * command_line, int *index, FILE* log_file)
 {
     int ARG = 0;
-    int i = 0;
+    int i = *index;
     int sign = 1;
     SkipSpaces (command_line, &i, log_file);
-
-    while (command_line[i] != '\n' && command_line[i] != '\r' && command_line[i] != '\t' &&command_line[i] != ' ' && command_line[i] != '\0')
+    if (command_line[i] == '-' && sign == 1)
+    {
+        sign *= -1;
+        i++;
+        SkipSpaces (command_line, &i, log_file);
+    }
+    else if (command_line[i] == '+')
+    {
+        sign *= 1;
+        i++;
+        SkipSpaces (command_line, &i, log_file);
+    }
+    while (command_line[i] != '\t' &&command_line[i] != ' ' && NOT_END )
     {
         int digit = command_line[i] - '0';
-        if (command_line[i] == '-' && sign == 1)
-            sign = -1;
-        else
+       
+        if (digit <= 9 && digit >= 0)
         {
-            if (digit <= 9 && digit >= 0)
-            {
-                ARG = ARG*10 + digit;
-            }
-            else
-            {
-                fprintf(log_file, "ERROR: wrong argument (%c)\n", command_line[i]);
-                ERROR (ERR_WRONG_ARGUMENT);
-            }
+            ARG = ARG*10 + digit;
         }
-        
+        else if (command_line[i] != ']' && command_line[i] != 'r')
+        {
+            fprintf(log_file, "ERROR: wrong argument (%c)\n", command_line[i]);
+            ERROR (ERR_WRONG_ARGUMENT);
+        }    
         i++;
     }
     ARG *= sign;
-    IsEndOfStr (command_line, &i, log_file);
-
+    *index = i;
+    SkipSpaces (command_line, index, log_file);
     return ARG;
 }
 
 
 
 #define DEF_REG(namer, numr)                                                                \
-    if (StrnCompare(command_line + i, #namer, 2) == 0)                                      \
+    if (strncmp(command_line + i, #namer, 3) == 0)                                      \
     {                                                                                       \
         i += strlen(#namer);                                                                \
         REG = numr;                                                                         \
@@ -286,11 +314,10 @@ int FindArg (char * command_line, FILE* log_file)
 
 
 
-int FindReg (char * command_line, FILE * log_file)
+int FindReg (char * command_line, int *index, FILE * log_file)
 {
     int REG = 0;
-    int i = 0;
-    SkipSpaces (command_line, &i, log_file);
+    int i = *index;
 
     #include "registers.h"
 
@@ -298,7 +325,8 @@ int FindReg (char * command_line, FILE * log_file)
         fprintf (log_file, "ERROR: Wrong register\n");
         ERROR (ERR_WRONG_ARGUMENT);
     }
-    IsEndOfStr (command_line, &i, log_file);
+    *index = i;
+    SkipSpaces (command_line, index, log_file);
     return REG;
 }
 
@@ -311,19 +339,19 @@ int FindReg (char * command_line, FILE * log_file)
 
 int IsEndOfStr (char *command_line, int *i, FILE *log_file)
 {
-    while ((command_line[*i] == ' ' || command_line[*i] == '\t') && command_line[*i] != '\n' && command_line[*i] != '\r')
+    while ((command_line[*i] == ' ' || command_line[*i] == '\t') && command_line[*i] != '\n' && command_line[*i] != '\r' && command_line[*i] != '\0')
         *i += 1;
     if (command_line[*i] != '\r' && command_line[*i] != '\n' && command_line[*i] != '\0')
     {
         int p = *i;
         fprintf (log_file, "ERROR: wrong end of line\n");
         fprintf (log_file, "line: <");
-                while (command_line[p] != '\n')
-                {
-                    fputc (command_line[p], log_file);
-                    p++;
-                }
-                fprintf (log_file, ">\n");
+        while (command_line[p] != '\n')
+        {
+            fputc (command_line[p], log_file);
+            p++;
+        }
+        fprintf (log_file, ">\n");
         ERROR (ERR_WRONG_END_OF_THE_LINE);
     }
     return 0;
@@ -350,7 +378,6 @@ void LablesCheck (LABLES *lables, int labl_cnt, FILE* log_file)
     {
         if ((lables[i]).b_numb == -1)
         {
-            $meow
             fprintf(log_file, "error in lable<%s>\n", lables[i].lable_name);
             fprintf (log_file, "ERROR: function(or jump) without defenition(or lable)\n");
             ERROR (ERR_FUNC_WITHOUT_DEFENITION);
@@ -395,3 +422,7 @@ int  TranslateToCode (char* buffer, int ch_numb, char* code, LABLES** lables, in
 
 
 
+#undef NOT_END
+#undef K_FLAG
+#undef R_FLAG
+#undef M_FLAG
