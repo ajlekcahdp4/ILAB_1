@@ -1,0 +1,26 @@
+in
+call fact_calc
+push rax
+out
+hlt
+
+
+fact_calc:
+    pop rax
+    push rax
+
+    
+    pop rbx
+    next:
+        push rbx
+        push 1
+        sub
+        pop rbx
+        push rbx
+        push rax
+        mul
+        pop rax
+        push rbx
+        push 1
+    jne next
+ret
