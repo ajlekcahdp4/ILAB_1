@@ -14,7 +14,7 @@ DEF_CMD(push, 1, 1, {
     }
     if (cmd & (1<<5))
     {
-        delay(200000);
+        delay(100000);
         arg = RAM[arg];
     }
     StackPush (Data->stk, arg);
@@ -29,7 +29,7 @@ DEF_CMD (pop, 2, 1, {
     *ip += 1;
     if (cmd & (1<<5))
     {
-        delay(200000);
+        delay(100000);
         if (cmd & (1<<6))
         {
             index += Data->reg[ *(code + *ip) ];
@@ -140,5 +140,22 @@ DEF_CMD (dump, 18, 0,{
     *ip += 1;
 })
 
-
-
+DEF_CMD (draw, 19, 0, {
+    for (int i = 256; i < 1024; i++)
+    {
+        if (RAM[i] == 0)
+        {
+            putchar ('.');
+            putchar (' ');
+        }
+        else if (RAM[i] == 1)
+        {
+            putchar ('#');
+            putchar (' ');
+        }
+        else if (RAM[i] == '\n')
+            putchar ('\n');
+    }
+    *ip += 1;
+    putchar('\n');
+})

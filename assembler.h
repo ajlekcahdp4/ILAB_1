@@ -1,18 +1,34 @@
+//=================================================================================================================
+//                                  Assembler program for my processor
+//=================================================================================================================
+/*!
+        \author Alex Romanov
+        \version 1.0
+        \date 02.01.2022
+*/
+
+
 #ifndef ASSEMBLER_INCLUDED
 #define ASSEMBLER_INCLUDED
 
 #include "includes.h"
-
+/*!
+\brief struct of lables and their bytes's nombers to jump
+*/
 struct LABLES {
-    int b_numb;
-    char * lable_name;
+    int b_numb;///<byte number
+    char * lable_name;///<name of the lable
 };
 typedef struct LABLES LABLES;
 
-
+/*!
+\brief macros to abort the program with the error messege
+*/
 #define ERROR(str)                                  \
     fclose(log_file);                               \
     assert(!#str);                                  \
+
+
 
 int     FillBuffer      (char* file_name, char ** buffer, FILE** log_file);
 void    Assembler       (char* buffer, int ch_numb, FILE* log_file);

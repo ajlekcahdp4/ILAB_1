@@ -31,7 +31,7 @@ void Processor (FILE* log_file)
     Stack * Rets = (Stack*) calloc (1, sizeof (Stack));
     StackCtor(Rets, 1, "Rets_logfile.txt");
 
-    int *RAM = (int*)calloc (128, sizeof(int));
+    int *RAM = (int*)calloc (1024, sizeof(int));
 
     FILE* code_file = fopen ("code.bin", "rb");
 

@@ -9,7 +9,7 @@
 
 
 #define DEF_CMD(name, num, args, ...)                                                                                                       \
-    if (StrnCompare(command_line, #name, strlen(#name)- 1) == 0)                                                                            \
+    if (strncmp(command_line, #name, strlen(#name)) == 0)                                                                                   \
     {                                                                                                                                       \
         code[*ip] = num;                                                                                                                    \
         int cmd = *ip;                                                                                                                      \
@@ -99,7 +99,7 @@
     }                                                                                                                                       \
     else
 //===========================================================================================================================================
-//Залупить проверку аргумента
+//>rename "cmd"
 void CmdCode (char * code, int *ip, char * command_line, LABLES ** lables, int *labl_cnt, FILE* log_file, int run_numb)
 {
     assert (code);
@@ -304,7 +304,7 @@ int FindArg (char * command_line, int *index, FILE* log_file)
 
 
 #define DEF_REG(namer, numr)                                                                \
-    if (strncmp(command_line + i, #namer, 3) == 0)                                      \
+    if (strncmp(command_line + i, #namer, 3) == 0)                                          \
     {                                                                                       \
         i += strlen(#namer);                                                                \
         REG = numr;                                                                         \
