@@ -34,7 +34,7 @@ int main (int argc, char ** argv)
             ip++;
         }
     }
-    fprintf(asm_file, "draw\nhlt");
+    fprintf(asm_file, "draw %d\nhlt", ip);
 
     free (pic);
     fclose (pic_file);
