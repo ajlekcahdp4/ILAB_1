@@ -1,5 +1,4 @@
 <h1 align="center">ILAB_1</h1>
-<h2 align="center">
 ## This is the repo with my firts projects on MIPT ILAB course
 ## Here is the list:
 ## 1.[**QuadraticEquation**](https://github.com/ajlekcahdp4/ILAB_1/tree/main/QudraticEquation) 
