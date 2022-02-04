@@ -11,4 +11,4 @@ Then the program generates its own poem from the lines of "Evreniy Onegin" which
 
 * "Evgeniy Onegin" is a very important and famous poem of Russian writer A.S.Pushkin.
 ## 3.[**Stack**](https://github.com/ajlekcahdp4/ILAB_1/tree/main/Stack)
-Stack is a library with my realization of stack data type.
+Stack is a library with my realization of stack data structure.
